@@ -2,67 +2,73 @@
 
 ## funciones de utilidad general, privadas
 
-#'
-#' @description vector has elements?
-#' @param x
-#' @return TRUE or FALSE
+#' length
+#' @description vector has length greater than zero?
+#' @param x vector
+#' @return logical
 #' @author eddy castellón
 filled <- function(x) {
     lenght(x) > 0
 }
 
 #' character type
-#' @description test x is of character type and has elements
+#' @description vector is of character type and has elements?
 #' @param x vector
-#' @return TRUE or FALSE
+#' @return logical
 filled_char <- function(x) {
     is.character(x) && length(x)
 }
 
 #' numeric mode
-#' @description test x is of numeric mode and has elements
+#' @description vector is of numeric mode and has elements?
 #' @param x vector
-#' @return TRUE or FALSE
+#' @return logical
 filled_num <- function(x) {
     is.numeric(x) && length(x)
 }
 
 #' integer type
-#' @description test x is of integer type and has elements
+#' @description vector is of integer type and has elements?
 #' @param x vector
-#' @return TRUE or FALSE
+#' @return logical
 filled_int <- function(x) {
     is.integer(x) && length(x)
 }
 
-#' double type
-#' @description test x is of double type and has elements
-#' @param x vector
-#' @return TRUE or FALSE
-filled_dou <- function(x) {
-    is.double(x) && length(x)
-}
-
-#' path file
-#' @description test if a string is a valid path to a file; that is,
-#'     it begins with one o more alphanumeric character followed by a
-#'     slash, or it begins with "./" or ".\\" followed by one or more
-#'     alpanumeric characters and in both cases ended with an
-#'     alphanumeric character
+#' path maybe
+#' @description test string begins with one o more alphanumeric
+#'     characters followed by file path separators, or it begins with
+#'     "./" or ".\\" followed by one or more alpanumeric characters;
+#'     in both cases ending in alphanumeric character.
 #' @param x character
 #' @return TRUE if x has at least one slash followed by and ended by
 #'     an alphanumeric character
 #' @examples
 #' is_path(".aa/bb") -> FALSE
 #' is_path("aa/bb") -> TRUE
-#' 
+#' is_path("aa/bb.") -> FALSE
 #' @author eddy castellón
 is_path <- function(x) {
-    bb <- filled_char(x) && nzchar(x)
-    if (bb) {
-        bb <- grepl("^((\\w+[/\\])|(\\.?[/\\]\\w+)).+\\w$", x)
+    filled_char(x) && grepl("^((\\w+[/\\])|(\\.?[/\\]\\w+)).+\\w$", x)
+}
+
+#' file name
+#' @description check file's name is valid using the function
+#' \code{file.create} of base R. If any directory in the path chain
+#' doesn't exists, the file's name is invalid.
+#' @param x character; the file's name
+#' @return logical
+#' @examples
+#' @author eddy castellón
+ok_fname <- function(x = character()) {
+    ok <- file.exists(x)
+    if (!ok) {
+        ok <- file.create(x)
+        if (ok) {
+            unlink(x)
+        }
     }
-    bb
+    return(ok)
 }
 
 #' Caracter
@@ -88,6 +94,9 @@ ok_num <- function(x) {
 ok_int <- function(x) {
     is.integer(x) && length(x)
 }
+
+#' !!
+chk_vector_call <- function(x) TRUE
 
 #' dots argument
 #' @description arguments in ... returned as a character or integer

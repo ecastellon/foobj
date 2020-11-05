@@ -409,7 +409,7 @@ add_tof <- function(..., file, env = parent.frame()){
 
     ## exists and process
     nm <- nm[jj]
-    if (file.exists()) {
+    if (file.exists(file)) {
         ne <- new.env()
         oo <- try_load(file, ne)
         if (!is.null(oo)) {
@@ -424,7 +424,7 @@ add_tof <- function(..., file, env = parent.frame()){
                         "\n... to replace with the same name !!!")
             }
             
-            for (jj in seq_along(nm))) {
+            for (jj in seq_along(nm)) {
                 assign(nm[jj], ob[[jj]], envir = ne, inherits = FALSE)
             }
 
@@ -434,7 +434,7 @@ add_tof <- function(..., file, env = parent.frame()){
                              nn, file))
         }
     } else {
-        save(nm, file = file, envir = env)
+        save(list = nm, file = file, envir = env)
     }
     
     return(nm)
@@ -482,10 +482,11 @@ save_df.data.frame <- function(x, name = character(), file,
     }
 
     ## new name valid?
+    ## !!! reserved words?
     ok <- filled_char(name) && nzchar(name) &&
         grepl("^[a-zA-z][[:alnum:]]*$", name)
     if (!ok) {
-        warning("\n... data.frame's name won't be changed")
+        warning("\n... data.frame's name not changed")
         name <- deparse(substitute(x))
     }
 
