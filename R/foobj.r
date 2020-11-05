@@ -2,25 +2,25 @@
 
 #' load file
 #' @description load a file catching errors
-#' @param x file's name
-#' @param env environment where objects are loaded;
+#' @param x character; file's name
+#' @param env object environment where objects are loaded;
 #' \code{parent.frame} by default
-#' @return objects' names or NULL
+#' @return character; objects' names or NULL
 #' @examples
 #' try_load("xx.rda")
 #' try_load("xx.rda", env = new.env())
 #' @author eddy castellón
-try_load <- function(x, env = parent.frame()){
-  if (!is.environment(env)) {
-    message("... argument is NOT an environment !!!")
-    return(NULL)
-  }
-
+try_load <- function(x, env = parent.frame()) {
   if (missing(x) || !filled_char(x)){
       message("... file's name is missing !!!")
       return(NULL)
   }
   
+  if (!is.environment(env)) {
+    message("... argument is NOT an environment !!!")
+    return(NULL)
+  }
+
   tryCatch(load(x, envir = env),
            error = function(e){
                if (file.exists(x)) {
@@ -50,6 +50,7 @@ try_load <- function(x, env = parent.frame()){
 #'     of any length. In this case, the name of the file must have at
 #'     least a path separator (/). This is an alternative to the
 #'     function \code{comment} of base R.
+#' @param object that will hold the attribute
 #' @export
 #' @examples
 #' meta(df) <- "some metadata"
@@ -64,7 +65,7 @@ try_load <- function(x, env = parent.frame()){
 #' @description read the value of the attribute \code{meta} or the
 #'     content of the file recorded in the attribute
 #' @param x name of the object
-#' @return a string or \code{NA} if the object hasn't the attribute
+#' @return string or \code{NA} if the object hasn't the attribute
 #'     \code{meta}
 #' @export
 #' @examples
@@ -97,9 +98,12 @@ meta <- function(x){
 #'     returned as a column of a data.frame? (TRUE by default)
 #' @param class character; return objects of specified class only; by
 #'     default data.frame; "." for any class.
-#' @return a character vector if meta is FALSE; a data.frame
-#'     otherwise; or NULL if errors
+#' @return a character vector if meta is FALSE; a data.frame or NULL
+#'     if errors otherwise
 #' @export
+#' @examples
+#' list_off("file.rda") -> data.frame of data.frame names if any
+#' list_off("file.rda", meta = FALSE) -> character vector
 #' @author Eddy Castellón
 list_off <- function(file, meta = TRUE, class = "data.frame"){
 
@@ -153,41 +157,49 @@ list_off <- function(file, meta = TRUE, class = "data.frame"){
     }
 }
 
-#' data.frames en archivo
-#' @description Lista los data.frame almacenados en el archivo \code{file}
-#' @param file ruta/nombre del archivo
-#' @param meta incluir el atributo \code{meta}?; TRUE por omisión.
-#' @return devuelve vector con los nombres de data.frame o un
-#'     data.frame con el atributo \code{meta} asociado.
+#' data.frames in file
+#' @description read the names of the data.frames in a file and
+#'     produces a character vector or a data.frame with the names and
+#'     the values in the attribute \code{meta}. It is an alias of the
+#'     function list_off with the argument class set to "data.frame"
+#' @param file character; path to the file
+#' @param meta logical; read the value of the attribute \code{meta}
+#'     also?; TRUE by default
+#' @return character vector or data.frame
+#' @seealso list_off
 #' @export
 #' @examples
-#' list_dff("file_name")
+#' list_dff("file_name.rda") -> data.frame
+#' list_dff("file_name.rda", meta = FALSE) -> character vector
 #' @author Eddy Castellón
 list_dff <- function(file, meta = TRUE){
-  list_off(file, meta, clase = "data.frame")
+  list_off(file, meta, class = "data.frame")
 }
 
-#' Transferir objetos
-#' @description Lleva un grupo de objetos almacenados en archivo a un
-#'     \code{environment} específico; si este no se indica se da por
-#'     supuesto que es el de donde se llama la función. Además del
-#'     nombre de los objetos y del archivo, \code{clase} indica la
-#'     clase de objetos que serán transferidos.
-#' @param ... los objetos; no indicar el parámetro si quiere todos
-#' @param file nombre del archivo
-#' @param clase la clase (heredada) de los objetos; "." si
-#'     todos; \code{data.frame} por omisión
-#' @param env el \code{environment}
-#' @return vector de caracteres con el nombre de los objetos
-#'     transferidos
+#' load objects
+#' @description Load objects of a specified class saved inf a file
+#'     into an environment
+#' @param ... object's names; if they are not specified, load all the
+#'     objects
+#' @param file character; file's name
+#' @param class character; the class of the objects; write "." for any
+#'     class; "data.frame" by default
+#' @param env object environment; the parent.frame by default
+#' @return character vector with the names of the loaded objects
 #' @export
+#' @examples
+#' read_off(file = "file_name.rda", class = "data.frame") ->
+#'     all data.frame loaded into the parent.frame
+#' read_off(ob1, ob2, file = "file.rda", class = "data.frame") -> load
+#'     into the parent.frame the objects ob1 and ob2 if they are of
+#'     class data.frame
 #' @author eddy castellón
-read_off <- function(..., file = character(), clase = "data.frame",
+read_off <- function(..., file = character(), class = "data.frame",
                      env = parent.frame()){
 
     ANY <- "."
     if (!is.environment(env)) {
-        message("!!! No existe env")
+        message("!!! environment doesn't exists")
         return(NULL)
     }
 
@@ -201,10 +213,10 @@ read_off <- function(..., file = character(), clase = "data.frame",
         }
 
         ## si hay objetos en el pedido, ahora por la clase
-        if (any(keep) && clase != ANY){
+        if (any(keep) && class != ANY){
             for (jj in which(keep)) {
                 ob <- get(oo[jj], envir = env, inherits = FALSE)
-                keep[jj] <- inherits(ob, clase)
+                keep[jj] <- inherits(ob, class)
             }
         }
 
@@ -219,48 +231,59 @@ read_off <- function(..., file = character(), clase = "data.frame",
     return(oo)
 }
 
-#' Transferencia data.frame
-#' @description Lee uno o más data.frame almacenados en un archivo y
-#'     los asigna a un \code{environment} con el mismo nombre que
-#'     tienen en el archivo
-#' @param ... nombres de los data.frame
-#' @param file ruta/nombre del archivo
-#' @param env \code{environment} destino; por omisión aquél desde
-#'     donde se llama la función (parent.frame)
-#' @return lista de los data.frame que fueron encontrados y devueltos
+#' load data.frame
+#' @description Load one or more data frames saved in a file into an
+#'     environment. It is an alias of the function read_off with the
+#'     parameter class set to "data.frame".
+#' @param ... data frames' names; if not indicated load all the
+#'     data.frames
+#' @param file character; file's path
+#' @param env environment object; the parent frame by default
+#' @return character vector with the names of the data frames loaded
+#' @seealso read_off
 #' @examples
-#' read_dff(c("aa", "bb"), file="xx.rda")
+#' read_dff(c("aa", "bb"), file = "xx.rda")
+#' read_dff(aa, bb, file = "xx.rda")
+#' read_dff(file = "xx.rda")
 #' nwe <- new.env(); read_dff(aa, file = "xx.rda", env = nwe)
 #' @export
 #' @author eddy castellón
 read_dff <- function(..., file, env = parent.frame()){
 
     if (missing(...)) {
-        oo <- read_off(file = file, env = env, clase = "data.frame")
+        oo <- read_off(file = file, env = env, class = "data.frame")
     } else {
         oo <- read_off(..., file = file, env = env,
-                       clase = "data.frame")
+                       class = "data.frame")
     }
 
     return(oo)
 }
 
-#' Extraer objetos
-#' @description Extrae (lee) objetos almacenados en archivo para
-#'   asignarlos a una variable en el \code{environment} desde donde se
-#'   llama la función
-#' @param ... nombre de objeto; no indicar si todos
-#' @param file nombre de archivo
-#' @param clase la clase (heredada) de los objetos
-#' @return objeto o lista de objetos si más de uno
+#' load-bind objects
+#' @description Read one or more objects saved in a file to be binded
+#'     to a variable
+#' @param ... object's names; include all the objects if not specified
+#' @param file character; file's path
+#' @param class character; objects' class; "." for any class;
+#'     "data.frame" by default
+#' @seealso read_off
+#' @return object or list of objects or NULL; invisible return
+#' @examples
+#' get_off(file = "ff.rda", class = "data.frame") -> return a list with
+#' all data frames saved in the file
+#' get_off(df1, df2, file = "ff.rda", class = "data.frame") -> a list
+#' of 2 data frames if both df1 and df2 are of class data.frame
+#' get_off(c("df1", "df2"), file = "ff.rda")
+#' get_off(df1, file = "ff.rda") -> a data.frame
 #' @export
 #' @author Eddy Castellón
-get_off <- function(..., file = character(), clase = "data.frame"){
+get_off <- function(..., file = character(), class = "data.frame"){
     ne <- new.env()
     if (missing(...)) {
-        oo <- read_off(file = file, env = ne, clase = clase)
+        oo <- read_off(file = file, env = ne, class = class)
     } else {
-        oo <- read_off(..., file = file, env = ne, clase = clase)
+        oo <- read_off(..., file = file, env = ne, class = class)
     }
 
     if (is.null(oo)) {
@@ -272,25 +295,28 @@ get_off <- function(..., file = character(), clase = "data.frame"){
     }
 }
 
-#' Extraer data.frame
-#' @description Lee data.frame almacenado en archivo para asignarlo a
-#'     una variable en el \code{environment} desde donde se llama la
-#'     función.
-#' @param ... nombre(s) de los \code{data.frame}; no indicarlo si
-#'     todos
-#' @param file nombre del archivo
-#' @return data.frame o lista de \code{data.frame} (invisible)
+#' load-bind data.frame
+#' @description read one or more data frames saved in a file for
+#'     binding to a variable in the parent.frame. It is an alias of
+#'     the function get_off with the parameter class set to
+#'     "data.frame"
+#' @param ... data frames' names or a character vector with the names;
+#'     if it is not specified read all the data frames
+#' @param file character; file's path
+#' @return a data.frame, a list of data frames or NULL; return
+#'     invisible
+#' @seealso get_off
 #' @examples
-#' ww <- get_dff(aa, file="xx.rda")
-#' @seealso get_dff_c
+#' ww <- get_dff(aa, file = "xx.rda")
+#' ww <- get_dff(aa, bb, file = "xx.rda")
+#' ww <- get_dff(file = "xx.rda")
 #' @export
-#' @importFrom assertthat assert_that
 #' @author eddy castellón
 get_dff <- function(..., file){
     if (missing(...)){
-        oo <- get_off(file = file, clase = "data.frame")
+        oo <- get_off(file = file, class = "data.frame")
     } else {
-        oo <- get_off(..., file = file, clase = "data.frame")
+        oo <- get_off(..., file = file, class = "data.frame")
     }
 
     if (is.null(oo)) {
@@ -300,17 +326,25 @@ get_dff <- function(..., file){
     }
 }
 
-#' Remover objeto
-#' @description Remueve objeto almacenado en archivo
-#' @param x nombre de objeto
-#' @param file nombre de archivo
-#' @param file2 archivo actualizado; si no se indica, el archivo será
-#'     el mismo de entrada
-#' @return nombres de los objetos archivados; NULL si la operación no
-#'     tiene éxito
+#' remove object
+#' @description remove object from a file and save the remaining
+#'     objects in another or the same file
+#' @param x object's name
+#' @param file character; file's path with the object
+#' @param file2 character; file's path with the remaining objects; if
+#'     it is missing, the remaining objects will be saved in the same
+#'     file
+#' @return a character vector with the name of the remaining objects,
+#'     or NULL if the operation is aborted
+#' @examples
+#' rm_off(xx, file = "file1.rda", file2 = "file2.rda") -> remove the
+#' object from file and save the remanining objects in file2; file it
+#' is not modified
+#' rm_off(xx, file = "file1.rda") -> file is modified; the object is
+#' lost
 #' @export
 #' @author Eddy Castellón
-rm_off <- function(x, file = character(), file2){
+rm_off <- function(x, file = character(), file2) {
 
     ne <- new.env()
     oo <- try_load(file, ne)
@@ -331,87 +365,136 @@ rm_off <- function(x, file = character(), file2){
     oo
 }
 
-#' Agrega objetos a un archivo.
-#' @description Agrega a un archivo uno o más objetos asociados a un
-#'     \code{environment} específico, conservando los que ya se
-#'     encontraban en él.
-#' @param ... nombre de objetos (sin comillas o en un vector),
-#'     asociados al \code{environment}.
-#' @param file ruta/nombre del archivo
-#' @param env el \code{environment} al que están asociados los
-#'     objetos; por omisión, aquél desde donde se llama la función
-#'     (parent.frame)
-#' @return lista de objetos agregados o NULL si operación fracasa
+#' add objects
+#' @description Add objects to a file without removing the objects
+#'     already saved in it. When one object has the same name than any
+#'     one in the file, the object in the file is replaced with the
+#'     new one
+#' @param ... object's names or a character vector with the names of
+#'     the objects
+#' @param file character; file's path where the objects will be added;
+#'     if the file does not exists the function creates it
+#' @param env object environment where the objects live; the
+#'     parent.frame by default
+#' @return character vector with the names of the objects added or
+#'     NULL if error
 #' @export
 #' @examples
-#' add_tof(aa, bb, file="xx.rda")
-#' add_tof(c("aa", "bb"), file="xx.rda")
+#' add_tof(aa, bb, file = "xx.rda")
+#' add_tof(c("aa", "bb"), file = "xx.rda")
+#' add_tof(aa, file = "xx.rda", env = .GlobalEnv)
 add_tof <- function(..., file, env = parent.frame()){
 
     if (!is.environment(env)) {
-        message("... NO es \"environment\" !!!")
-        return(NULL)
-    }
-
-    if (missing(...)) {
-        message("... NADA que agregar !!!")
-        return(NULL)
-    }
-
-    if (missing(file)){
-        message("... FALTA nombre archivo !!!")
+        message("... environment does not exists !!!")
         return(NULL)
     }
     
-    ne <- new.env()
-    oo <- try_load(file, ne)
-    if (!is.null(oo)) {
-        ##!!! los obj. en ... asociados a env
-        nm <- dots_arg(...)
-        nn <- length(nm)
-        ob <- mget(nm, env, ifnotfound = vector("list", nn),
-                   inherits = FALSE)
+    if (missing(...)) {
+        message("... nothing to add !!!")
+        return(NULL)
+    }
+    
+    ## objects' names
+    nm <- dots_arg(...)
+    
+    ## which objects in env
+    jj <- vapply(nm, exists, FALSE, envir = env, inherits = FALSE,
+                 USE.NAMES = FALSE)
 
-        if (any(copi <- (nm %in% oo))) {
-            message(nm[copi], " sust. a los que ya en archivo !!!")
-        }
-        
-        for (jj in seq.int(nn)) {
-            copi[jj] <- !is.null(ob[[jj]])
-            if (copi[jj]) assign(nm[jj], ob[[jj]], envir = ne,
-                                 inherits = FALSE)
-        }
-
-        if (any(copi)) {
-            oo <- nm[copi]
-            save(list = ls(ne, all.names = TRUE), file = file,
-                 envir = ne)
-            cat(gettextf("%i objetos transferidos a %s\n",
-                        sum(copi), file))
-        } else {
-            oo <- NULL
-        }
-
+    if (!any(jj)) {
+        message("\n... objects doesn't exists !!!")
+        return(NULL)
     }
 
-    return(oo)
+    ## exists and process
+    nm <- nm[jj]
+    if (file.exists()) {
+        ne <- new.env()
+        oo <- try_load(file, ne)
+        if (!is.null(oo)) {
+            ## move the objects to the environment where
+            ## the objects already in file are bounded
+            ob <- mget(nm, env, ifnotfound = vector("list", 1),
+                       inherits = FALSE)
+
+            ## check for copies
+            if (any(copi <- (nm %in% oo))) {
+                message(nm[copi],
+                        "\n... to replace with the same name !!!")
+            }
+            
+            for (jj in seq_along(nm))) {
+                assign(nm[jj], ob[[jj]], envir = ne, inherits = FALSE)
+            }
+
+            save(list = ls(ne, all.names = TRUE), file = file,
+                 envir = ne)
+            message(gettextf("%i saved objects into %s\n",
+                             nn, file))
+        }
+    } else {
+        save(nm, file = file, envir = env)
+    }
+    
+    return(nm)
 }
 
-#' Agrega objetos a un archivo; alias de add_tof
-#' @description Agrega a un archivo uno o más objetos asociados a un
-#'     \code{environment} específico, conservando los que ya se
-#'     encontraban en él.
-#' @param ... nombre de objetos (sin comillas o en un vector),
-#'     asociados al \code{environment}.
-#' @param file ruta/nombre del archivo
-#' @param env el \code{environment} al que están asociados los
-#'     objetos; por omisión, aquél desde donde se llama la función
-#'     (parent.frame)
-#' @return lista de objetos agregados o NULL si operación fracasa
+#' add objects
+#' @description It is an alias of add_tof. Add objects to a file
+#'     without removing the objects already saved in it, except when
+#'     one object has the same name than any one in the file; in this
+#'     case the object in the file is replaced with the new one
+#' @param ... object's names or a character vector with the names of
+#'     the objects
+#' @param file character; file's path where the objects will be added;
+#'     if the file does not exists the function creates it
+#' @param env object environment where the objects live; the
+#'     parent.frame by default
+#' @return character vector with the names of the objects or NULL if
+#'     error
 #' @export
 #' @examples
-#' add_tof(aa, bb, file="xx.rda")
-#' add_tof(c("aa", "bb"), file="xx.rda")
+#' save_add(aa, bb, file = "xx.rda")
+#' save_add(c("aa", "bb"), file = "xx.rda")
+#' save_add(aa, file = "xx.rda", env = .GlobalEnv)
 save_add <- function(..., file, env = parent.frame()){
   add_tof(..., file, env)
+}
+
+#' @export
+save_df <- function(x, name, file) UseMethod("save_df")
+
+#' save data.frame
+#' @description Agrega data.frame a un archivo con un nuevo nombre si
+#'     así fuera indicado. Los objetos (data.frame y otros)
+#'     previamente almacenados en el archivo, son preservados.
+#' @param x nombre del data.frame (sin comillas).
+#' @param name nombre con que será almacenado el data.frame en el archivo.
+#' @param file ruta/nombre del archivo
+#' @export
+#' @importFrom assertthat assert_that
+save_df.data.frame <- function(x, name = character(), file,
+                               metadata = character()) {
+    stopifnot("file missing" = !missing(file))
+    if (filled_char(metadata)) {
+        meta(x) <- metadata
+    }
+
+    ## new name valid?
+    ok <- filled_char(name) && nzchar(name) &&
+        grepl("^[a-zA-z][[:alnum:]]*$", name)
+    if (!ok) {
+        warning("\n... data.frame's name won't be changed")
+        name <- deparse(substitute(x))
+    }
+
+    ne <- new.env()
+    assign(name, x, envir = ne)
+    oo <- add_tof(name, file = file, env = ne)
+    
+    if (!is.null(oo)) {
+        message("\n ... data.frame ", name, "added to ", file)
+    }
+    return(oo)
 }
