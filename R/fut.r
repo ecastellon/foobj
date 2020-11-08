@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-## funciones de utilidad general, privadas
+## private functions
 
 #' length
 #' @description vector has length greater than zero?
@@ -8,7 +8,7 @@
 #' @return logical
 #' @author eddy castellón
 filled <- function(x) {
-    lenght(x) > 0
+    length(x) > 0
 }
 
 #' character type
@@ -44,10 +44,10 @@ filled_int <- function(x) {
 #' @return TRUE if x has at least one slash followed by and ended by
 #'     an alphanumeric character
 #' @examples
-#' is_path(".aa/bb") -> FALSE
-#' is_path("aa/bb") -> TRUE
-#' is_path("aa/bb.") -> FALSE
-#' @author eddy castellón
+#' \dontrun{
+#' is_path(".aa/bb")
+#' is_path("aa/bb")
+#' is_path("aa/bb.")}
 is_path <- function(x) {
     filled_char(x) && grepl("^((\\w+[/\\])|(\\.?[/\\]\\w+)).+\\w$", x)
 }
@@ -58,7 +58,6 @@ is_path <- function(x) {
 #' doesn't exists, the file's name is invalid.
 #' @param x character; the file's name
 #' @return logical
-#' @examples
 #' @author eddy castellón
 ok_fname <- function(x = character()) {
     ok <- file.exists(x)
@@ -71,45 +70,25 @@ ok_fname <- function(x = character()) {
     return(ok)
 }
 
-#' Caracter
-#' @description es vector de caracteres y tiene elementos
-#' @param x vector
-#' @return TRUE si es vector de tipo character y tiene elementos
-ok_chr <- function(x) {
-    is.character(x) && length(x)
-}
-
-#' Numerico
-#' @description es vector modo numérico y con elementos
-#' @param x vector
-#' @return TRUE si es vector numérico y tiene elementos
-ok_num <- function(x) {
-    is.numeric(x) && length(x)
-}
-
-#' Entero
-#' @description es vector tipo entero y con elementos
-#' @param x vector
-#' @return TRUE si es vector tipo entero y tiene elementos
-ok_int <- function(x) {
-    is.integer(x) && length(x)
-}
-
-#' !!
+#' check call
+#' @description check arguments in a call
+#' @param x arguments
+#' @return logical
 chk_vector_call <- function(x) TRUE
 
-#' dots argument
+#' dot argument
 #' @description arguments in ... returned as a character or integer
 #'     vector
-#' @param ...
-#' @return character or integer vector or NULL
-#' @examples
-#' dots_arg(a, b) -> c("a", "b")
-#' dots_arg("a", "b") -> c("a", "b")
-#' dots_arg(c("a", "b")) -> c("a", "b")
-#' dots_arg(1:3) -> c(1, 2, 3)
+#' @param ... arguments
+#' @return \code{NULL}, character or integer vector
 #' @author eddy castellón
-dots_arg <- function(...){
+#' @examples
+#' \dontrun{
+#' dots_arg(a, b)
+#' dots_arg("a", "b")
+#' dots_arg(c("a", "b"))
+#' dots_arg(1:3)}
+dots_arg <- function(...) {
     xp <- eval(substitute(alist(...)))
     nn <- length(xp)
 
@@ -119,8 +98,8 @@ dots_arg <- function(...){
         if (nn == 1L) {
             if (inherits(xp[[1]], "call")) {
                 ## !!!
-                ## debería verificar es c(..) o seq(., .)
-                ## que log(.) u otra similar es error
+                ## check is c(..) or seq(., .)
+                ## log(.) or similar error
                 if (chk_vector_call(xp[[1]])) {
                     ex <- eval(xp[[1]])
                     if (is.numeric(ex)) {
@@ -139,4 +118,53 @@ dots_arg <- function(...){
             NULL
         }
     }
+}
+
+#' save
+#' @description save without errors?
+#' @param ... arguments passed to function save
+#' @return logical; FALSE if save with errors
+#' @author eddy castellón
+save_ok <- function(...) {
+    !inherits(try(save(...)), "try-error")
+}
+
+#' load file
+#' @description load a file catching errors
+#' @param x character; file's name
+#' @param env object environment where objects are loaded;
+#' \code{parent.frame} by default
+#' @return character; objects' names or NULL
+#' @examples
+#' \dontrun{
+#' try_load("xx.rda")
+#' try_load("xx.rda", env = new.env())}
+#' @author eddy castellón
+try_load <- function(x, env = parent.frame()) {
+  if (missing(x) || !filled_char(x)){
+      message("... file's name is missing !!!")
+      return(NULL)
+  }
+  
+  if (!is.environment(env)) {
+    message("... argument is NOT an environment !!!")
+    return(NULL)
+  }
+
+  tryCatch(load(x, envir = env),
+           error = function(e){
+               if (file.exists(x)) {
+                   message("... read ERROR !!!")
+               } else {
+                   message("... file doesn't exists !!!")
+               }
+               return(NULL)},
+           warning = function(e){
+               if (file.exists(x)) {
+                   message("... read ERROR!!!")
+               } else {
+                   message("... file doesn't exists !!!")
+               }
+               return(NULL)}
+           )
 }

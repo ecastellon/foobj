@@ -1,16 +1,21 @@
+-*- coding: utf-8 -*-
 Package: foobj
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Add, remove, retrive objects from a file
+Version: 0.0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Eddy",
+           family = "Castellón",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+           email = "castelloneddy@hotmail.com",
+           comment = "")
+Description: The functions in this package are for listing the objects
+  stored in a file, to remove or add (or replace) others without loosing all
+  those already stored in it, to load some objects in a safe way, and for
+  adding and read metadata related to them.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
+Suggests: 
+    testthat
