@@ -44,11 +44,12 @@ meta <- function(x, read_me = FALSE){
     if (is.null(cc)) {
         cc <- NA_character_
     } else {
-        if (read_me && is_path(cc) &&
-            (file.access(cc, mode = 4L) == 0)) {
-            cc <- readLines(cc, ok = FALSE)
-        } else {
-            message("\n... access denied !!!")
+        if (read_me) {
+            if (is_path(cc) && file.access(cc, mode = 4L) == 0) {
+                cc <- readLines(cc, ok = FALSE)
+            } else {
+                message("\n... access denied !!!")
+            }
         }
     }
     cc
