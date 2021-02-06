@@ -55,7 +55,7 @@ meta <- function(x, read_me = FALSE){
     cc
 }
 
-#' objects
+#' objects' names
 #' @description return the object's names (a character vector) and the
 #'     values of its attributes \code{meta} (as a data.frame), of the
 #'     objects saved in a file
@@ -86,7 +86,7 @@ list_off <- function(file, meta = TRUE, class = "."){
     ANY  <- "."
     anyclas <- class == ANY
 
-    ne <- new.env()
+    ne <- new.env(parent = emptyenv())
     cc <- try_load(file, ne)
     if (is.null(cc)) return(cc)
     ## !!!
@@ -134,14 +134,14 @@ list_off <- function(file, meta = TRUE, class = "."){
 }
 
 #' data.frames in file
-#' @description read the names of the data.frames in a file and
-#'     produces a character vector or a data.frame with the names and
-#'     the values in the attribute \code{meta}. It is an alias of the
-#'     function list_off with the argument class set to "data.frame"
+#' @description return the names of the data.frames stored in a file
+#'     or a data.frame with the names and the values in the attribute
+#'     \code{meta}. It is an alias of the function list_off with the
+#'     argument class set to "data.frame"
 #' @param file character; path to the file
 #' @param meta logical; read the value of the attribute \code{meta}
 #'     also?; TRUE by default
-#' @return character vector or data.frame
+#' @return character or data.frame
 #' @seealso list_off, meta
 #' @export
 #' @examples
@@ -200,7 +200,7 @@ read_off <- function(..., file = character(), class = ".",
         return(NULL)
     }
 
-    ne <- new.env()
+    ne <- new.env(parent = emptyenv())
     oo <- try_load(file, ne) #load to env could overwrite
 
     ## objects in file
@@ -222,7 +222,7 @@ read_off <- function(..., file = character(), class = ".",
         ok <- logical(length(oo)) #track class
         for (kk in seq_along(oo)) {
             ob <- get(oo[kk], envir = ne, inherits = FALSE)
-            if (ok[kk] <- inherits(ob, class)) {
+            if (ok[kk] <- class == "any" || inherits(ob, class)) {
                 assign(oo[kk], ob, pos = env)
             }
         }
@@ -259,14 +259,14 @@ read_dff <- function(..., file, env = parent.frame()){
 }
 
 #' load-bind objects
-#' @description Read one or more objects saved in a file to be binded
+#' @description Read one or more objects saved in a file and binds them
 #'     to a variable
-#' @param ... object's names; include all the objects if not specified
+#' @param ... objects' names; include all the objects if it's missing
 #' @param file character; file's path
 #' @param class character; objects' class; "." for any class which is
 #'     the default
 #' @seealso read_off
-#' @return object or list of objects or NULL; invisible return
+#' @return object or list of objects or NULL
 #' @examples
 #' df <- data.frame(x = 1:3, y = 3:1)
 #' meta(df) <- "some metadata"
@@ -292,8 +292,8 @@ read_dff <- function(..., file, env = parent.frame()){
 #' rm(df, d2, vi, rd, fi)
 #' @export
 #' @author Eddy Castellón
-get_off <- function(..., file = character(), class = "."){
-    ne <- new.env()
+get_off <- function(..., file = character(), class = ".") {
+    ne <- new.env(parent = emptyenv())
     if (missing(...)) {
         oo <- read_off(file = file, env = ne, class = class)
     } else {
@@ -309,9 +309,9 @@ get_off <- function(..., file = character(), class = "."){
     }
 }
 
-#' load-bind data.frame
-#' @description read one or more data frames saved in a file for
-#'     binding to a variable in the parent.frame. It is an alias of
+#' load-bind data.frames
+#' @description read one or more data frames saved in a file and bind
+#'     them to a variable in the parent.frame. It is an alias of
 #'     the function get_off with the parameter class set to
 #'     "data.frame"
 #' @param ... data frames' names or a character vector with the names;
@@ -322,13 +322,32 @@ get_off <- function(..., file = character(), class = "."){
 #' @seealso get_off
 #' @export
 #' @author eddy castellón
-get_dff <- function(..., file){
+get_dfs <- function(..., file){
     if (missing(...)){
         oo <- get_off(file = file, class = "data.frame")
     } else {
         oo <- get_off(..., file = file, class = "data.frame")
     }
 
+    if (is.null(oo)) {
+        return(oo)
+    } else {
+        invisible(oo)
+    }
+}
+
+#' load-bind data.frame
+#' @description read one data frame saved in a file and bind it to a
+#'     variable in the parent.frame.
+#' @param x data frame's name or a string with the name
+#' @param file character; file's path
+#' @return a data.frame or NULL invisible
+#' @seealso get_off
+#' @export
+#' @author eddy castellón
+get_dff <- function(x, file) {
+    df <- as.character(substitute(x))
+    oo <- do.call("get_off", list(df, file = file, class = "data.frame"))
     if (is.null(oo)) {
         return(oo)
     } else {
@@ -363,7 +382,7 @@ get_dff <- function(..., file){
 #' @author Eddy Castellón
 rm_off <- function(x, file = character(), file2) {
 
-    ne <- new.env()
+    ne <- new.env(parent = emptyenv())
     oo <- try_load(file, ne)
 
     if (!is.null(oo)) {
@@ -435,7 +454,7 @@ add_tof <- function(..., file, env = parent.frame()){
     if (ok <- filled(nm)) {
         ## exists load and process
         if (file.exists(file)) {
-            ne <- new.env()
+            ne <- new.env(parent = emptyenv())
             oo <- try_load(file, ne)
             
             if (ok <- !is.null(oo)) {
@@ -540,7 +559,7 @@ save_df.data.frame <- function(x, name = character(), file,
         name <- deparse(substitute(x))
     }
 
-    env <- new.env()
+    env <- new.env(parent = emptyenv())
     if (file.exists(file)) {#file.access?
         load(file, envir = env)
     }
@@ -553,5 +572,5 @@ save_df.data.frame <- function(x, name = character(), file,
         name <- NULL
     }
     
-    return(name)
+    invisible(name)
 }
